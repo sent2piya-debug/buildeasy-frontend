@@ -1,0 +1,9 @@
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans,Arial}
+a{text-decoration:none;color:#1864ab} nav{border-bottom:1px solid #eee}
+.container{max-width:960px;margin:0 auto;padding:0 16px}
+.card{border:1px solid #eaeaea;border-radius:12px;padding:16px;margin-bottom:12px}
+input,select,textarea{width:100%;padding:10px;margin:6px 0 12px;border:1px solid #ddd;border-radius:8px}
+button{padding:10px 16px;border-radius:10px;border:none;background:#1864ab;color:#fff;cursor:pointer}
+button.secondary{background:#adb5bd;color:#222}.flex{display:flex;gap:12px;align-items:center}
+.badge{padding:4px 8px;border-radius:999px;background:#e7f5ff;border:1px solid #d0ebff;font-size:12px}
+.header{display:flex;justify-content:space-between;align-items:center}
