@@ -7,6 +7,7 @@ export default function NavBar(){
   return(<nav><div className="container header">
     <div><Link to="/jobs"><strong>🏗️ BuildEasy</strong></Link></div>
     <div className="flex">
+      <Link to="/planner">Kitchen Planner</Link>
       {user?.role==="customer" && <Link to="/post-job">Post Job</Link>}
       {user?.role==="agent" && <Link to="/post-job">Create Job</Link>}
       {!user ? (<><Link to="/login">Login</Link><Link to="/register">Register</Link></>) :
