@@ -1,5 +1,6 @@
 // src/planner/KitchenPlanner.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Catalog from "./Catalog";
 
 /* ===== Config ===== */
 const CM_TO_PX = 2;            // 1 cm = 2 px  (60 cm cabinet => 120 px)
