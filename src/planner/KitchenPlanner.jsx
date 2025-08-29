@@ -1,382 +1,370 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+// src/planner/KitchenPlanner.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-// ===== Settings
-const cmToPxScale = 2;        // 1 cm = 2 px  (60cm cabinet => 120px)
-const gridStepCm  = 10;       // snap to 10 cm
-const snapPx      = gridStepCm * cmToPxScale;
+/* ===== Config ===== */
+const CM_TO_PX = 2;            // 1 cm = 2 px  (60 cm cabinet => 120 px)
+const GRID_STEP_CM = 10;       // snap every 10 cm
+const SNAP = GRID_STEP_CM * CM_TO_PX;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const uid = () => Math.random().toString(36).slice(2, 9);
 
-const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-const uid   = () => Math.random().toString(36).slice(2, 9);
-
-// Preset library (width w, depth d, height h are in CM)
+/* Simple catalog (feel free to expand) */
 const PRESETS = [
-  { group: "Base",       type: "base-60",   w: 60,  d: 60,  h: 90,  label: "Base 60" },
-  { group: "Base",       type: "base-80",   w: 80,  d: 60,  h: 90,  label: "Base 80" },
-  { group: "Wall",       type: "wall-80",   w: 80,  d: 35,  h: 72,  label: "Wall 80" },
-  { group: "Appliance",  type: "sink-80",   w: 80,  d: 60,  h: 90,  label: "Sink 80" },
-  { group: "Appliance",  type: "stove-60",  w: 60,  d: 60,  h: 90,  label: "Stove 60" },
-  { group: "Appliance",  type: "fridge-90", w: 90,  d: 70,  h: 200, label: "Fridge 90" },
+  { group: "Base",      type: "base-60",   w: 60,  d: 60,  h: 90,  label: "Base 60" },
+  { group: "Base",      type: "base-80",   w: 80,  d: 60,  h: 90,  label: "Base 80" },
+  { group: "Wall",      type: "wall-80",   w: 80,  d: 35,  h: 72,  label: "Wall 80" },
+  { group: "Appliance", type: "sink-80",   w: 80,  d: 60,  h: 90,  label: "Sink 80" },
+  { group: "Appliance", type: "stove-60",  w: 60,  d: 60,  h: 90,  label: "Stove 60" },
+  { group: "Appliance", type: "fridge-90", w: 90,  d: 70,  h: 200, label: "Fridge 90" },
 ];
 
-const colorFor = (t) => {
-  if (t.startsWith("base"))      return "#e1f0ff";
-  if (t.startsWith("wall"))      return "#fff3d6";
-  if (t.startsWith("sink"))      return "#d6f6ff";
-  if (t.startsWith("stove"))     return "#ffe4e1";
-  if (t.startsWith("fridge"))    return "#eeeeee";
+const colorFor = (type) => {
+  if (type.startsWith("base")) return "#e1f0ff";
+  if (type.startsWith("wall")) return "#fff3d6";
+  if (type.startsWith("sink")) return "#d6f0ff";
+  if (type.startsWith("stove")) return "#ffe1e1";
+  if (type.startsWith("fridge")) return "#eee";
   return "#ddd";
 };
 
-// ======= Component
+/* ===== Catalog (left pane) ===== */
+function Catalog({ onAdd }) {
+  const groups = Array.from(new Set(PRESETS.map(p => p.group)));
+  return (
+    <div style={{ width: 240, borderRight: "1px solid #eee", padding: 12 }}>
+      <div style={{ fontWeight: 700, marginBottom: 8 }}>Catalog</div>
+      {groups.map((g) => (
+        <div key={g} style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 6 }}>{g}</div>
+          {PRESETS.filter(p => p.group === g).map(p => (
+            <button
+              key={p.type}
+              onClick={() => onAdd(p)}
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                padding: "8px 10px",
+                marginBottom: 6,
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                background: "#fff",
+                cursor: "pointer"
+              }}
+            >
+              <div style={{ fontWeight: 600 }}>{p.label}</div>
+              <div style={{ fontSize: 12, opacity: 0.7 }}>
+                {p.w}×{p.d} cm
+              </div>
+            </button>
+          ))}
+        </div>
+      ))}
+      <div style={{ fontSize: 12, marginTop: 16, opacity: 0.7 }}>
+        Tip: After adding, use mouse to drag.  
+        Keys: <b>R</b> rotate, <b>Del</b> delete, <b>Ctrl+D</b> duplicate, arrows move.
+      </div>
+    </div>
+  );
+}
+
+/* ===== Main Planner ===== */
 export default function KitchenPlanner() {
-  // Room size in CM (inside, top-down)
-  const [room, setRoom]   = useState({ w: 360, d: 300 }); // default 3.6m x 3.0m
-  const [items, setItems] = useState([]);                 // placed items
-  const [selId, setSelId] = useState(null);               // selected item id
-  const [tool, setTool]   = useState(null);               // preset “about to place”
+  // room size (inside dimensions, centimeters)
+  const [room, setRoom] = useState({ w: 360, d: 300 }); // default 3.6 m x 3.0 m
+  // placed items
+  const [items, setItems] = useState([]);
+  // selected item id
+  const [selId, setSelId] = useState(null);
 
-  const canvasRef = useRef(null);
-  const [pan, setPan]     = useState({ x: 40, y: 40 });   // px offset
-  const [zoom, setZoom]   = useState(1);                  // not exposed yet (kept for future)
+  // canvas refs
+  const wrapRef = useRef(null);
 
-  // Load/save local draft
+  // load/save to localStorage
   useEffect(() => {
-    const draft = localStorage.getItem("planner_draft");
-    if (draft) {
+    const saved = localStorage.getItem("planner:state");
+    if (saved) {
       try {
-        const parsed = JSON.parse(draft);
-        if (parsed.room && parsed.items) {
-          setRoom(parsed.room);
-          setItems(parsed.items);
-        }
+        const { room: r, items: it } = JSON.parse(saved);
+        if (r) setRoom(r);
+        if (it) setItems(it);
       } catch {}
     }
   }, []);
   useEffect(() => {
-    localStorage.setItem("planner_draft", JSON.stringify({ room, items }));
+    localStorage.setItem("planner:state", JSON.stringify({ room, items }));
   }, [room, items]);
 
-  const roomPx = useMemo(
-    () => ({ w: Math.round(room.w * cmToPxScale), d: Math.round(room.d * cmToPxScale) }),
-    [room]
+  // add from catalog
+  const handleAdd = (preset) => {
+    const id = uid();
+    const x = 20 * CM_TO_PX;
+    const y = 20 * CM_TO_PX;
+    setItems(prev => [
+      ...prev,
+      { id, ...preset, x, y, r: 0, group: preset.type.startsWith("wall") ? "wall" : "base" }
+    ]);
+    setSelId(id);
+  };
+
+  const sel = useMemo(
+    () => items.find(it => it.id === selId) || null,
+    [items, selId]
   );
 
-  // ---- Helpers
-  const snap = (v) => Math.round(v / snapPx) * snapPx;
-
-  const addFromPreset = (preset) => {
-    // place near top-left (inside room) by default
-    const newItem = {
-      id: uid(),
-      type: preset.type,
-      label: preset.label,
-      x: snap(10 * cmToPxScale),
-      y: snap(10 * cmToPxScale),
-      w: preset.w,
-      d: preset.d,
-      rot: 0, // 0 or 90 (we’ll keep it simple)
-    };
-    setItems((prev) => [...prev, newItem]);
-    setSelId(newItem.id);
-    setTool(null);
+  /* --- pointer interaction for dragging --- */
+  const dragInfo = useRef(null);
+  const onPointerDown = (e, id) => {
+    const rect = wrapRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const it = items.find(i => i.id === id);
+    dragInfo.current = { id, ox: x - it.x, oy: y - it.y };
+    setSelId(id);
+    (e.target).setPointerCapture?.(e.pointerId);
   };
+  const onPointerMove = (e) => {
+    if (!dragInfo.current) return;
+    const rect = wrapRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const nx = Math.round((x - dragInfo.current.ox) / SNAP) * SNAP;
+    const ny = Math.round((y - dragInfo.current.oy) / SNAP) * SNAP;
 
-  const removeSelected = () => {
-    if (!selId) return;
-    setItems((prev) => prev.filter((it) => it.id !== selId));
-    setSelId(null);
-  };
-
-  const resetAll = () => {
-    setItems([]);
-    setSelId(null);
-  };
-
-  const rotateSelected = () => {
-    setItems((prev) =>
-      prev.map((it) =>
-        it.id !== selId
+    setItems(prev =>
+      prev.map(it =>
+        it.id !== dragInfo.current.id
           ? it
-          : { ...it, rot: it.rot === 0 ? 90 : 0 }
+          : {
+              ...it,
+              x: clamp(nx, 0, room.w * CM_TO_PX - it.w * CM_TO_PX),
+              y: clamp(ny, 0, room.d * CM_TO_PX - it.d * CM_TO_PX),
+            }
       )
     );
   };
+  const onPointerUp = () => (dragInfo.current = null);
 
-  // ---- Mouse interactions on canvas
-  const [drag, setDrag] = useState(null); // {id, dx, dy, kind: "move"|"resize"}
-
-  const hitTest = (mx, my) => {
-    // hit test items from top (last) to bottom
-    for (let i = items.length - 1; i >= 0; i--) {
-      const it = items[i];
-      const { x, y } = it;
-      const [wPx, dPx] = (it.rot === 0)
-        ? [it.w * cmToPxScale, it.d * cmToPxScale]
-        : [it.d * cmToPxScale, it.w * cmToPxScale];
-
-      // resize handle (bottom-right 16x16)
-      if (mx >= x + wPx - 16 && mx <= x + wPx && my >= y + dPx - 16 && my <= y + dPx) {
-        return { id: it.id, kind: "resize" };
-      }
-      if (mx >= x && mx <= x + wPx && my >= y && my <= y + dPx) {
-        return { id: it.id, kind: "move" };
-      }
-    }
-    return null;
-  };
-
-  const onMouseDown = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const mx = (e.clientX - rect.left - pan.x) / zoom;
-    const my = (e.clientY - rect.top - pan.y) / zoom;
-
-    // Placing a tool: create immediately
-    if (tool) {
-      addFromPreset(tool);
-      return;
-    }
-
-    const hit = hitTest(mx, my);
-    if (hit) {
-      setSelId(hit.id);
-      setDrag({ id: hit.id, ox: mx, oy: my, kind: hit.kind });
-    } else {
-      setSelId(null);
-    }
-  };
-
-  const onMouseMove = (e) => {
-    if (!drag) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const mx = (e.clientX - rect.left - pan.x) / zoom;
-    const my = (e.clientY - rect.top - pan.y) / zoom;
-
-    const dx = mx - drag.ox;
-    const dy = my - drag.oy;
-    setDrag((d) => ({ ...d, dx, dy }));
-  };
-
-  const onMouseUp = () => {
-    if (!drag) return;
-    const { id, dx = 0, dy = 0, kind } = drag;
-
-    setItems((prev) =>
-      prev.map((it) => {
-        if (it.id !== id) return it;
-
-        const [wPx0, dPx0] = (it.rot === 0)
-          ? [it.w * cmToPxScale, it.d * cmToPxScale]
-          : [it.d * cmToPxScale, it.w * cmToPxScale];
-
-        if (kind === "move") {
-          // move + snap + clamp inside room
-          let nx = snap(it.x + dx);
-          let ny = snap(it.y + dy);
-          nx = clamp(nx, 0, roomPx.w - wPx0);
-          ny = clamp(ny, 0, roomPx.d - dPx0);
-          return { ...it, x: nx, y: ny };
-        } else {
-          // resize along width & depth of current rotation (simple proportional)
-          let wPx = snap(wPx0 + dx);
-          let dPx = snap(dPx0 + dy);
-          wPx = clamp(wPx, 20, roomPx.w - it.x);
-          dPx = clamp(dPx, 20, roomPx.d - it.y);
-
-          // convert back to CM according to current rotation
-          if (it.rot === 0) {
-            return { ...it, w: Math.round(wPx / cmToPxScale), d: Math.round(dPx / cmToPxScale) };
-          } else {
-            return { ...it, w: Math.round(dPx / cmToPxScale), d: Math.round(wPx / cmToPxScale) };
-          }
-        }
-      })
-    );
-    setDrag(null);
-  };
-
-  // Keyboard helpers
+  /* --- keyboard shortcuts --- */
   useEffect(() => {
     const onKey = (e) => {
       if (!selId) return;
-      if (e.key === "Delete" || e.key === "Backspace") {
-        removeSelected();
-      }
-      if (e.key.toLowerCase() === "r") {
-        rotateSelected();
-      }
-      const delta = e.shiftKey ? snapPx : cmToPxScale * 5; // nudge
-      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+      const idx = items.findIndex(i => i.id === selId);
+      if (idx < 0) return;
+
+      // duplicate
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
         e.preventDefault();
-        setItems((prev) =>
-          prev.map((it) => {
-            if (it.id !== selId) return it;
-            let nx = it.x, ny = it.y;
-            if (e.key === "ArrowLeft") nx = clamp(it.x - delta, 0, roomPx.w - it.w * cmToPxScale);
-            if (e.key === "ArrowRight") nx = clamp(it.x + delta, 0, roomPx.w - it.w * cmToPxScale);
-            if (e.key === "ArrowUp") ny = clamp(it.y - delta, 0, roomPx.d - it.d * cmToPxScale);
-            if (e.key === "ArrowDown") ny = clamp(it.y + delta, 0, roomPx.d - it.d * cmToPxScale);
-            return { ...it, x: snap(nx), y: snap(ny) };
-          })
-        );
+        const clone = { ...items[idx], id: uid(), x: items[idx].x + SNAP, y: items[idx].y };
+        setItems(prev => [...prev, clone]);
+        setSelId(clone.id);
+        return;
       }
+
+      // rotate
+      if (e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        setItems(prev =>
+          prev.map((it, i) => (i === idx ? { ...it, r: (it.r + 90) % 360 } : it))
+        );
+        return;
+      }
+
+      // delete
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        setItems(prev => prev.filter((it, i) => i !== idx));
+        setSelId(null);
+        return;
+      }
+
+      // nudge with arrows
+      const move = (dx, dy) => {
+        setItems(prev =>
+          prev.map((it, i) =>
+            i !== idx
+              ? it
+              : {
+                  ...it,
+                  x: clamp(it.x + dx, 0, room.w * CM_TO_PX - it.w * CM_TO_PX),
+                  y: clamp(it.y + dy, 0, room.d * CM_TO_PX - it.d * CM_TO_PX),
+                }
+          )
+        );
+      };
+      if (e.key === "ArrowLeft") { e.preventDefault(); move(-SNAP, 0); }
+      if (e.key === "ArrowRight") { e.preventDefault(); move(SNAP, 0); }
+      if (e.key === "ArrowUp") { e.preventDefault(); move(0, -SNAP); }
+      if (e.key === "ArrowDown") { e.preventDefault(); move(0, SNAP); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selId, roomPx.w, roomPx.d]);
+  }, [items, selId, room]);
 
-  // Export / Import
-  const exportJSON = () => {
-    const blob = new Blob([JSON.stringify({ room, items }, null, 2)], { type: "application/json" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href = url;
-    a.download = "kitchen-plan.json";
-    a.click();
-    URL.revokeObjectURL(url);
+  /* --- helpers to render grid & rulers --- */
+  const gridStyle = {
+    backgroundImage: `
+      linear-gradient(to right, #f2f2f2 1px, transparent 1px),
+      linear-gradient(to bottom, #f2f2f2 1px, transparent 1px)
+    `,
+    backgroundSize: `${SNAP}px ${SNAP}px`,
   };
 
-  const importJSON = (file) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-        if (data.room && data.items) {
-          setRoom(data.room);
-          setItems(data.items);
-          setSelId(null);
-        } else {
-          alert("Invalid file.");
-        }
-      } catch {
-        alert("Invalid file.");
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  // ===== Render
+  /* --- UI --- */
   return (
-    <div className="planner-wrap">
-      {/* Toolbar */}
-      <div className="toolbar">
-        <div className="group">
-          <strong>Add</strong>
-          {PRESETS.map((p) => (
-            <button
-              key={p.type}
-              className={tool?.type === p.type ? "active" : ""}
-              onClick={() => setTool(p)}
-              title={`${p.label} (${p.w}x${p.d}cm)`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+    <div style={{ height: "calc(100vh - 80px)", display: "flex" }}>
+      <Catalog onAdd={handleAdd} />
 
-        <div className="group">
-          <strong>Room (cm)</strong>
-          <label>W
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        {/* Toolbar */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: 10, borderBottom: "1px solid #eee" }}>
+          <b>Kitchen Planner</b>
+          <div style={{ marginLeft: 16, fontSize: 13, opacity: 0.75 }}>
+            Room size (cm):
+          </div>
+          <label style={{ fontSize: 13 }}>
+            W:&nbsp;
             <input
               type="number"
               value={room.w}
-              onChange={(e) => setRoom((r) => ({ ...r, w: Number(e.target.value || 0) }))}
               min={100}
+              max={1000}
+              onChange={e => setRoom(r => ({ ...r, w: Number(e.target.value || 0) }))}
+              style={{ width: 80 }}
             />
           </label>
-          <label>D
+          <label style={{ fontSize: 13 }}>
+            D:&nbsp;
             <input
               type="number"
               value={room.d}
-              onChange={(e) => setRoom((r) => ({ ...r, d: Number(e.target.value || 0) }))}
               min={100}
+              max={1000}
+              onChange={e => setRoom(r => ({ ...r, d: Number(e.target.value || 0) }))}
+              style={{ width: 80 }}
             />
           </label>
-          <button onClick={resetAll}>Reset</button>
+          <button
+            onClick={() => { setItems([]); setSelId(null); }}
+            style={{ marginLeft: "auto", padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd", background: "#fff" }}
+          >
+            Clear Room
+          </button>
         </div>
 
-        <div className="group">
-          <button onClick={rotateSelected} disabled={!selId}>Rotate (R)</button>
-          <button onClick={removeSelected} disabled={!selId}>Delete (Del)</button>
+        {/* Canvas */}
+        <div style={{ padding: 14, overflow: "auto" }}>
+          <div
+            ref={wrapRef}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            style={{
+              position: "relative",
+              width: room.w * CM_TO_PX,
+              height: room.d * CM_TO_PX,
+              border: "1px solid #ddd",
+              borderRadius: 8,
+              background: "#fff",
+              ...gridStyle,
+              margin: "0 auto"
+            }}
+          >
+            {/* items */}
+            {items.map(it => {
+              const W = it.r % 180 === 0 ? it.w * CM_TO_PX : it.d * CM_TO_PX;
+              const H = it.r % 180 === 0 ? it.d * CM_TO_PX : it.w * CM_TO_PX;
+              return (
+                <div
+                  key={it.id}
+                  onPointerDown={(e) => onPointerDown(e, it.id)}
+                  onDoubleClick={() => setSelId(it.id)}
+                  style={{
+                    position: "absolute",
+                    left: it.x,
+                    top: it.y,
+                    width: W,
+                    height: H,
+                    transform: `rotate(${it.r}deg)`,
+                    transformOrigin: "top left",
+                    background: colorFor(it.type),
+                    border: selId === it.id ? "2px solid #2b90ff" : "1px solid #bbb",
+                    borderRadius: 6,
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.07)",
+                    cursor: "grab",
+                    userSelect: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {it.label}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="group">
-          <button onClick={exportJSON}>Export</button>
-          <label className="importBtn">
-            Import
-            <input type="file" accept="application/json" onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) importJSON(f);
-              e.target.value = "";
-            }} />
-          </label>
-        </div>
-      </div>
-
-      {/* Canvas */}
-      <div
-        className="canvas"
-        ref={canvasRef}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-      >
-        <div
-          className="room"
-          style={{
-            width:  roomPx.w,
-            height: roomPx.d,
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: "top left"
-          }}
-        >
-          {/* grid */}
-          <Grid w={roomPx.w} d={roomPx.d} />
-
-          {/* items */}
-          {items.map((it) => (
-            <Item
-              key={it.id}
-              it={it}
-              selected={it.id === selId}
-            />
-          ))}
+        {/* Selection inspector */}
+        <div style={{ borderTop: "1px solid #eee", padding: 10, fontSize: 13 }}>
+          {sel ? (
+            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              <div><b>Selected:</b> {sel.label}</div>
+              <div>
+                X:&nbsp;
+                <input
+                  type="number"
+                  value={sel.x}
+                  onChange={e => {
+                    const v = Math.round(Number(e.target.value || 0) / SNAP) * SNAP;
+                    setItems(prev => prev.map(it => it.id === sel.id ? { ...it, x: clamp(v, 0, room.w * CM_TO_PX - it.w * CM_TO_PX) } : it));
+                  }}
+                  style={{ width: 80 }}
+                />
+              </div>
+              <div>
+                Y:&nbsp;
+                <input
+                  type="number"
+                  value={sel.y}
+                  onChange={e => {
+                    const v = Math.round(Number(e.target.value || 0) / SNAP) * SNAP;
+                    setItems(prev => prev.map(it => it.id === sel.id ? { ...it, y: clamp(v, 0, room.d * CM_TO_PX - it.d * CM_TO_PX) } : it));
+                  }}
+                  style={{ width: 80 }}
+                />
+              </div>
+              <div>
+                Rotation:&nbsp;
+                <input
+                  type="number"
+                  value={sel.r}
+                  step={90}
+                  onChange={e => {
+                    const v = Number(e.target.value || 0);
+                    setItems(prev => prev.map(it => it.id === sel.id ? { ...it, r: ((v % 360) + 360) % 360 } : it));
+                  }}
+                  style={{ width: 70 }}
+                />°
+              </div>
+              <button
+                onClick={() => setItems(prev => prev.filter(i => i.id !== sel.id))}
+                style={{ marginLeft: "auto", padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd", background: "#fff" }}
+              >
+                Delete
+              </button>
+            </div>
+          ) : (
+            <span style={{ opacity: 0.6 }}>No item selected</span>
+          )}
         </div>
       </div>
     </div>
   );
 }
+ 
+ 
+    
 
-// ======= Presentational subcomponents
-function Grid({ w, d }) {
-  const bgSize = snapPx;
-  const style = {
-    backgroundSize: `${bgSize}px ${bgSize}px`,
-    backgroundImage:
-      `linear-gradient(to right, #eee 1px, transparent 1px),` +
-      `linear-gradient(to bottom, #eee 1px, transparent 1px)`,
-  };
-  return <div className="grid" style={{ ...style, width: w, height: d }} />;
-}
-
-function Item({ it, selected }) {
-  const [wPx, dPx] = (it.rot === 0)
-    ? [it.w * cmToPxScale, it.d * cmToPxScale]
-    : [it.d * cmToPxScale, it.w * cmToPxScale];
-
-  return (
-    <div
-      className={`item ${selected ? "selected" : ""}`}
-      style={{
-        transform: `translate(${it.x}px, ${it.y}px)`,
-        width: wPx,
-        height: dPx,
-        background: colorFor(it.type),
-      }}
-    >
-      <div className="item-label">{it.label}</div>
-      <div className="resize-handle" />
-    </div>
-  );
-}
-
-          
