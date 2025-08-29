@@ -1,9 +1,9 @@
 import React from "react";
-import KitchenPlanner from "../planner/KitchenPlanner";
+import KitchenPlanner from "../planner/KitchenPlanner.jsx";
 
 export default function Planner() {
   return (
-    <div style={{ height: "100vh", width: "100vw" }}>
+    <div style={{ minHeight: "50vh", padding: 20 }}>
       <KitchenPlanner />
     </div>
   );
