@@ -1,14 +1,13 @@
-// src/api.js
 import axios from "axios";
 
-// Use Vercel env var if set, otherwise fall back to your Render URL
+// Base API URL (from Vercel env, fallback to backend URL)
 const API_BASE =
   (import.meta.env && import.meta.env.VITE_API_BASE) ||
   "https://buildeasy-backend.onrender.com";
 
 const api = axios.create({ baseURL: API_BASE });
 
-// Add JWT if present
+// Add token if present
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
