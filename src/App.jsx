@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import NavBar from "./components/NavBar.jsx";
+import Home from "./pages/Home";
 import JobsList from "./pages/JobsList.jsx";
 import JobDetail from "./pages/JobDetail.jsx";
 import PostJob from "./pages/PostJob.jsx";
@@ -16,6 +17,7 @@ export default function App() {
       <main style={{ maxWidth: 960, margin: "20px auto", padding: "0 16px" }}>
         <Routes>
           <Route path="/" element={<Navigate to="/jobs" replace />} />
+          <Route path="/" element={<Home />} />
           <Route path="/jobs" element={<JobsList />} />
           <Route path="/jobs/:id" element={<JobDetail />} />
           <Route path="/post-job" element={<PostJob />} />
