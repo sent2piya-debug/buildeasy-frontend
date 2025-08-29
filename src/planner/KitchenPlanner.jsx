@@ -8,15 +8,6 @@ const SNAP = GRID_STEP_CM * CM_TO_PX;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const uid = () => Math.random().toString(36).slice(2, 9);
 
-/* Simple catalog (feel free to expand) */
-const PRESETS = [
-  { group: "Base",      type: "base-60",   w: 60,  d: 60,  h: 90,  label: "Base 60" },
-  { group: "Base",      type: "base-80",   w: 80,  d: 60,  h: 90,  label: "Base 80" },
-  { group: "Wall",      type: "wall-80",   w: 80,  d: 35,  h: 72,  label: "Wall 80" },
-  { group: "Appliance", type: "sink-80",   w: 80,  d: 60,  h: 90,  label: "Sink 80" },
-  { group: "Appliance", type: "stove-60",  w: 60,  d: 60,  h: 90,  label: "Stove 60" },
-  { group: "Appliance", type: "fridge-90", w: 90,  d: 70,  h: 200, label: "Fridge 90" },
-];
 
 const colorFor = (type) => {
   if (type.startsWith("base")) return "#e1f0ff";
