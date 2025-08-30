@@ -306,3 +306,4 @@ button.secondary{background:#adb5bd;color:#222}.flex{display:flex;gap:12px;align
   .steps { grid-template-columns: 1fr; }
   .hero h1 { font-size: 28px; }
 }
+.muted { color: #6b7280; }
