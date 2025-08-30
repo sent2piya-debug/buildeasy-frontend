@@ -106,7 +106,7 @@ export default function Home() {
                 <div className="step-title">{title}</div>
                 <div className="step-sub">{blurb}</div>
               </div>
-            ))}
+
           </div>
           <div className="center">
             <Link className="btn primary" to="/post-job">Start Your Project</Link>
