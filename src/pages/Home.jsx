@@ -1,3 +1,17 @@
+// at top of Home.jsx: import { Link } from "react-router-dom";
+export default function Home() {
+  return (
+    <div className="container">
+      <h1>BuildEasy</h1>
+      <p>Find trusted contractors and plan your kitchen.</p>
+      <div style={{ display:"flex", gap:12 }}>
+        <Link className="btn" to="/jobs">Browse Jobs</Link>
+        <Link className="btn ghost" to="/planner">Try Kitchen Planner</Link>
+      </div>
+    </div>
+  );
+}
+
 import React from "react";
 import { Link } from "react-router-dom";
 
