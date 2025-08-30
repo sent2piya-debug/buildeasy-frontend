@@ -17,4 +17,4 @@ export default function JobsList() {
             <span className="badge">Budget: {job.budget_min}–{job.budget_max} THB</span>
             {job.location&&<span className="badge">{job.location}</span>}</div></div></div></div>))}
   </div>);
-}
+
