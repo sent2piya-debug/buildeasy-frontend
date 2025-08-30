@@ -2,7 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 export default function Home() {
-  return (
+  return <h2>Home OK</h2>;
+}
     <div className="home">
       {/* Hero */}
       <section className="hero">
