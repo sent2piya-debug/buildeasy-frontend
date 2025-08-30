@@ -89,44 +89,44 @@ export default function Home() {
           </div>
         </div>
       </section>
+{/* How it works */}
+<section className="section alt">
+  <div className="container">
+    <h2>How BuildConnect Works</h2>
 
-      {/* How it works */}
-      <section className="section alt">
-        <div className="container">
-          <h2>How BuildConnect Works</h2>
-          <div className="steps">
-            {[
-              ["Submit Your Project", "Upload photos and describe what you need."],
-              ["Get Matched", "We connect you with verified contractors."],
-              ["Compare & Book", "Review quotes and choose the best pro."],
-              ["Track Progress", "Monitor updates, photos, and milestones."]
-            ].map(([title, blurb], i) => (
-              <div className="step" key={i}>
-                <div className="step-icon">{i + 1}</div>
-                <div className="step-title">{title}</div>
-                <div className="step-sub">{blurb}</div>
-              </div>
-
-          </div>
-          <div className="center">
-            <Link className="btn primary" to="/post-job">Start Your Project</Link>
-          </div>
+    <div className="steps">
+      {[
+        { title: "Submit Your Project", blurb: "Upload photos and describe what you need." },
+        { title: "Get Matched", blurb: "We connect you with verified contractors." },
+        { title: "Compare & Book", blurb: "Review quotes and choose the best pro." },
+        { title: "Track Progress", blurb: "Monitor updates, photos, and milestones." }
+      ].map(({ title, blurb }, i) => (
+        <div className="step" key={i}>
+          <div className="step-icon">{i + 1}</div>
+          <div className="step-title">{title}</div>
+          <div className="step-sub">{blurb}</div>
         </div>
-      </section>
-
-      {/* CTA footer */}
-      <section className="cta">
-        <div className="container cta-inner">
-          <div>
-            <h2>Ready to Start Your Next Project?</h2>
-            <p className="muted">Join homeowners who finish on time and on budget.</p>
-          </div>
-          <div className="cta-actions">
-            <Link className="btn" to="/jobs">Get Started</Link>
-            <Link className="btn ghost" to="/planner">Try Kitchen Planner</Link>
-          </div>
-        </div>
-      </section>
+      ))}
     </div>
-  );
-}
+
+    <div className="center">
+      <Link className="btn primary" to="/post-job">Start Your Project</Link>
+    </div>
+  </div>
+</section>
+
+{/* CTA footer */}
+<section className="cta">
+  <div className="container cta-inner">
+    <div>
+      <h2>Ready to Start Your Next Project?</h2>
+      <p className="muted">Join homeowners who finish on time and on budget.</p>
+    </div>
+    <div className="cta-actions">
+      <Link className="btn" to="/jobs">Get Started</Link>
+      <Link className="btn ghost" to="/planner">Try Kitchen Planner</Link>
+    </div>
+  </div>
+</section>
+
+   
