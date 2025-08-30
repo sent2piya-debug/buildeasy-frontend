@@ -129,7 +129,7 @@ export default function Home() {
   </div>
 </section>
 </div>  ;/* END wrapper div opened near the top */
-);
+;
 }
 
    
