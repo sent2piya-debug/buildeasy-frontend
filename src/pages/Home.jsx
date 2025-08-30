@@ -68,7 +68,37 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* Home Building Services */}
+<section className="section">
+  <div className="container">
+    <h2 className="section-title">Home Building Services</h2>
+    <p className="muted" style={{ marginTop: 6 }}>
+      Professional construction and building services for major projects
+    </p>
 
+    <div className="services-grid" style={{ marginTop: 18 }}>
+      {[
+        { icon: "🏠", title: "Custom Home Building", range: "$200k – $800k" },
+        { icon: "➕", title: "Home Additions", range: "$50k – $200k" },
+        { icon: "🚗", title: "Garage Construction", range: "$15k – $50k" },
+        { icon: "🪵", title: "Deck & Patio", range: "$5k – $25k" },
+        { icon: "🧱", title: "Foundation Work", range: "$10k – $50k" },
+        { icon: "📐", title: "Structural Engineering", range: "$5k – $30k" },
+      ].map((s) => (
+        <div key={s.title} className="service-card">
+          <div className="service-icon">{s.icon}</div>
+          <div className="service-title">{s.title}</div>
+          <div className="service-range">{s.range}</div>
+        </div>
+      ))}
+    </div>
+
+    <p className="muted" style={{ marginTop: 18 }}>
+      Our certified general contractors handle everything—from custom homes to large additions.
+    </p>
+  </div>
+</section>
+    
       {/* How it works */}
       <section className="section alt">
         <div className="container">
