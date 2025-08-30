@@ -71,18 +71,89 @@ button.secondary{background:#adb5bd;color:#222}.flex{display:flex;gap:12px;align
 .page { padding: 16px; }
 
 /* Hero */
-.hero { background: #eaf2ff; padding: 64px 0; }
-.hero h1 { font-size: 36px; margin: 0 0 12px; }
-.hero p { color: #4b5563; margin: 0 0 20px; }
-.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.input { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; min-width: 240px; }
-.btn { padding: 10px 16px; border-radius: 8px; border: 1px solid #c7d2fe; background: #eef2ff; color: #1d4ed8; text-decoration: none; display: inline-block; }
-.btn.primary { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
-.btn.ghost { background: #fff; border: 1px solid #d1d5db; color: #111827; }
-.center { text-align: center; }
-.stats { display: flex; gap: 24px; list-style: none; padding: 0; margin: 18px 0 0; }
-.stats li { display: grid; gap: 2px; }
-.stats strong { font-size: 20px; }
+/* ===== Hero Section ===== */
+.hero {
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.hero-search {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+
+.hero-search .input {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  min-width: 220px;
+  font-size: 0.95rem;
+}
+
+.hero-search .btn-search {
+  padding: 10px 20px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  text-decoration: none;
+}
+
+.hero-search .btn-search:hover {
+  background: #1d4ed8;
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin: 20px 0;
+  list-style: none;
+  padding: 0;
+}
+
+.hero-stats li {
+  font-size: 1rem;
+  color: #333;
+}
+
+.hero-quick {
+  margin-top: 20px;
+}
+
+.hero-quick .btn {
+  margin: 0 8px;
+  padding: 8px 16px;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  text-decoration: none;
+  color: #2563eb;
+  transition: all 0.2s ease;
+}
+
+.hero-quick .btn:hover {
+  background: #2563eb;
+  color: white;
+}
+
 
 /* Sections */
 .section { padding: 56px 0; }
