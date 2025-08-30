@@ -51,31 +51,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="section alt">
-        <div className="container">
-          <h2 className="section-title">How BuildEasy Works</h2>
-          <div className="steps">
-            {[
-              ["Submit Your Project", "Upload photos and describe what you need."],
-              ["Get Matched", "We connect you with verified contractors."],
-              ["Compare & Book", "Review quotes and choose the best pro."],
-              ["Track Progress", "Monitor updates, photos, and milestones."]
-            ].map(([title, blurb], i) => (
-              <div className="step" key={i}>
-                <div className="step-icon">{i + 1}</div>
-                <div className="step-title">{title}</div>
-                <div className="step-sub">{blurb}</div>
-              </div>
-            ))}
-          </div>
-          <div className="center">
-            <Link className="btn primary" to="/post-job">Start Your Project</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Home Building Services */}
+       {/* Home Building Services */}
       <section className="section">
         <div className="container">
           <h2 className="section-title">Home Building Services</h2>
@@ -106,6 +82,30 @@ export default function Home() {
         </div>
       </section>
 
+      {/* How it works */}
+      <section className="section alt">
+        <div className="container">
+          <h2 className="section-title">How BuildEasy Works</h2>
+          <div className="steps">
+            {[
+              ["Submit Your Project", "Upload photos and describe what you need."],
+              ["Get Matched", "We connect you with verified contractors."],
+              ["Compare & Book", "Review quotes and choose the best pro."],
+              ["Track Progress", "Monitor updates, photos, and milestones."]
+            ].map(([title, blurb], i) => (
+              <div className="step" key={i}>
+                <div className="step-icon">{i + 1}</div>
+                <div className="step-title">{title}</div>
+                <div className="step-sub">{blurb}</div>
+              </div>
+            ))}
+          </div>
+          <div className="center">
+            <Link className="btn primary" to="/post-job">Start Your Project</Link>
+          </div>
+        </div>
+      </section>
+  
       {/* CTA footer */}
       <section className="cta">
         <div className="container cta-inner">
