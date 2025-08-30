@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../api";
 export default function JobsList() {
   return <h2>Jobs List OK</h2>;
-}
+
   const [jobs,setJobs]=useState([]); const [error,setError]=useState("");
   const user = JSON.parse(localStorage.getItem("user")||"null");
   useEffect(()=>{(async()=>{try{const {data}=await api.get("/jobs"); setJobs(data);}catch(e){setError("Please login to view jobs.");}})();},[]);
@@ -17,4 +17,4 @@ export default function JobsList() {
             <span className="badge">Budget: {job.budget_min}–{job.budget_max} THB</span>
             {job.location&&<span className="badge">{job.location}</span>}</div></div></div></div>))}
   </div>);
-
+}
